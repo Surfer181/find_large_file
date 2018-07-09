@@ -24,7 +24,7 @@ class FindLargeFiles(object):
         self.parser.add_argument('--version', '-V', action='version', version=__version__)
         self.parser.add_argument('--larger-than', '-M', type=float, default=100, help='查找大于多少MB的文件')
         self.parser.add_argument('--top', '-T', type=int, default=20, help='最后显示多少个文件')
-        self.parser.add_argument('--exclude', help='排除的路径')
+        self.parser.add_argument('--exclude', help='排除名称含有这个字符串的文件')
         self.parser.add_argument('--exclude-caches', action='store_true', help='排除Cache文件夹')
         self.args = self.parser.parse_args()
         self.ncdu_output_file_path = '/tmp/ncdu_%s.json' % int(time.time())
