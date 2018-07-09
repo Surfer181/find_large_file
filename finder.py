@@ -43,10 +43,9 @@ class FindLargeFiles(object):
         for file_or_dir_obj in file_or_dir_list_obj:
             if isinstance(file_or_dir_obj, dict):
                 file_name = os.path.join(parent_dir_name, file_or_dir_obj.get('name', ''))
-                file_size = file_or_dir_obj.get('asize')
-                print file_size
+                file_size = file_or_dir_obj.get('asize', 0)
                 if file_size > self.args.larger_than * MB:
-                    yield (file_name, round(file_size / MB, 2))
+                    print "%s   %s(MB)" % (file_name, round(file_size / MB, 2))
             else:  # list 的情况
                 file_name = os.path.join(parent_dir_name, file_or_dir_obj[0].get('name', ''))
                 self.recurse_ncdu_dir_obj(file_name, file_or_dir_obj)
@@ -54,9 +53,9 @@ class FindLargeFiles(object):
     def parse_ncdu_output_json_file(self):
         # TODO: 文件太大的话内存会爆，如何将 json 文件像数据库一样读取而不是一次性直接 load 到内存？
         with open(self.ncdu_output_file_path, 'r') as json_file:
-            dirs_obj = json.load(json_file)[3]
-            for file_to_find, size in self.recurse_ncdu_dir_obj(dirs_obj[0].get('name', ''), dirs_obj):
-                print "%s   %s(MB)" % (file_to_find, size)
+            dirs_obj = json.load(json_file)[-1]
+            dir_name = dirs_obj[0].get('name', '')
+            self.recurse_ncdu_dir_obj(dir_name, dirs_obj)
 
 
 if __name__ == '__main__':
