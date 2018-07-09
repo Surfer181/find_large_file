@@ -1,9 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import division
-import sys
 import os
-import commands
 import time
 import json
 import argparse
@@ -12,7 +10,7 @@ import argparse
 __version__ = 'v0.0.1'
 
 MB = 1 << 20
-DEFAULT_LARGER_THAN = 1024
+DEFAULT_LARGER_THAN = 100
 
 HELP_TEXT = """调用 ncdu 来定位文件系统中占用了较大空间的文件、目录，使用前请先安装 ncdu，参考： https://dev.yorhel.nl/ncdu """
 
@@ -22,18 +20,24 @@ class FindLargeFiles(object):
         self.parser = argparse.ArgumentParser(description=HELP_TEXT)
         self.parser.add_argument('path', type=str, nargs='?', default='.', help='要查找的路径')
         self.parser.add_argument('--version', '-V', action='version', version=__version__)
-        self.parser.add_argument('--larger_than', '-L', type=float, default=DEFAULT_LARGER_THAN, help='查找大于多少MB的文件')
+        self.parser.add_argument('--larger-than', '-M', type=float, default=DEFAULT_LARGER_THAN, help='查找大于多少MB的文件')
+        self.parser.add_argument('--exclude', help='排除的路径')
+        self.parser.add_argument('--exclude-caches', action='store_true', help='排除Cache文件夹')
         self.args = self.parser.parse_args()
         self.ncdu_output_file_path = '/tmp/ncdu_%s.json' % int(time.time())
 
     def call_ncdu(self):
         path_to_find = self.args.path
+        path_exclude = self.args.exclude
         # 调用 ncdu，结果输出到文件
-        ncdu_command = "ncdu -qxo %s %s" % (self.ncdu_output_file_path, path_to_find)
-        status, _ = commands.getstatusoutput(ncdu_command)
-        if status != 0:
-            print "'%s' 执行出错" % ncdu_command
-            sys.exit(1)
+        if path_exclude:
+            ncdu_command = "ncdu -qx --exclude=%s -o %s %s" % (path_exclude, self.ncdu_output_file_path, path_to_find)
+        else:
+            ncdu_command = "ncdu -qxo %s %s" % (self.ncdu_output_file_path, path_to_find)
+
+        if self.args.exclude_caches:
+            ncdu_command += ' --exclude-caches'
+        os.system(ncdu_command)
 
     def remove_ncdu_tmp_file(self):
         if os.path.isfile(self.ncdu_output_file_path):
